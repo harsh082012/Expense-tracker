@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibrant Expense Tracker</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuration for Inter font and responsive design -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #eef3f8; /* Very light subtle background */
+        }
+        /* Custom styles for the chart visualization */
+        .chart-bar {
+            transition: width 0.5s ease-out;
+            border-radius: 9999px;
+            height: 1.5rem; /* h-6 */
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="text-center mb-12 bg-white rounded-xl shadow-2xl p-6">
+            <h1 class="text-5xl font-extrabold text-[#006064] tracking-tight">
+                <span class="text-yellow-600">💰</span> BudgetFlow
+            </h1>
+            <p class="text-xl text-gray-600 mt-2 font-light">
+                Visualize and manage your spending. Monthly Budget: <span class="font-bold text-[#006064]">${{ budget }}</span>
+            </p>
+        </header>
+
+        <!-- Main Dashboard Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Expense Summary Section (Left/Top) -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Financial Metrics Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Total Spent Card (Red/Maroon theme) -->
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border-b-4 border-red-500 hover:shadow-2xl transition duration-300">
+                        <p class="text-sm font-semibold text-gray-500 uppercase">Total Spent</p>
+                        <p class="text-4xl font-extrabold text-red-700 mt-2">{{ summary.total_spent }}</p>
+                    </div>
+
+                    <!-- Budget Remaining Card (Teal/Blue theme) -->
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border-b-4 border-[#0097a7] hover:shadow-2xl transition duration-300">
+                        <p class="text-sm font-semibold text-gray-500 uppercase">Budget Remaining</p>
+                        <p class="text-4xl font-extrabold text-[#006064] mt-2">{{ summary.remaining_budget }}</p>
+                    </div>
+                    
+                    <!-- Daily Budget Card (Yellow/Gold theme) -->
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border-b-4 border-yellow-500 hover:shadow-2xl transition duration-300">
+                        <p class="text-sm font-semibold text-gray-500 uppercase">Daily Avg Budget</p>
+                        <p class="text-4xl font-extrabold text-yellow-700 mt-2">{{ summary.daily_budget }}</p>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown Chart -->
+                <div class="bg-white p-8 rounded-2xl shadow-xl">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-3">Category Spending Overview</h2>
+                    <div class="space-y-4">
+                        {% set max_amount = total_spent | replace('$', '') | float %}
+                        {% for item in chart_data %}
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-base font-medium text-gray-700">{{ item.name }}</span>
+                                <span class="text-base font-bold text-gray-900">${{ "%.2f" | format(item.value) }}</span>
+                            </div>
+                            <div class="bg-gray-100 rounded-full h-6 overflow-hidden shadow-inner">
+                                {% set width_percent = (item.value / max_amount) * 100 if max_amount > 0 else 0 %}
+                                <div class="chart-bar bg-[#0097a7] opacity-90" style="width: {{ width_percent }}%;"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Recent Transactions Table -->
+                <div class="bg-white p-8 rounded-2xl shadow-xl">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-3">Recent Transactions</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100">
+                                {% for expense in summary.recent_expenses %}
+                                <tr class="hover:bg-gray-50 transition duration-150">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ expense.Name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ expense.Category }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 text-right font-mono font-semibold">${{ "%.2f" | format(expense.Amount) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 text-right">{{ expense.Date }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="px-6 py-4 text-center text-base text-gray-500 italic">No expenses recorded yet. Start tracking!</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Add Expense Form (Right/Side) -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-10 bg-white p-8 rounded-2xl shadow-2xl border-t-8 border-[#0097a7]">
+                    <h2 class="text-3xl font-extrabold text-[#006064] mb-6">Log Expense</h2>
+
+                    <form method="POST" action="/" class="space-y-6">
+                        
+                        <!-- Name Input -->
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Expense Name</label>
+                            <input type="text" name="name" id="name" required 
+                                class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-lg focus:outline-none focus:ring-[#0097a7] focus:border-[#0097a7]"
+                                placeholder="e.g., Dinner with friends">
+                        </div>
+
+                        <!-- Amount Input -->
+                        <div>
+                            <label for="amount" class="block text-sm font-medium text-gray-700">Amount ($)</label>
+                            <input type="number" name="amount" id="amount" required step="0.01" min="0.01"
+                                class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-lg focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                                placeholder="e.g., 45.75">
+                        </div>
+
+                        <!-- Category Select -->
+                        <div>
+                            <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                            <select id="category" name="category" required
+                                class="mt-1 block w-full pl-4 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-[#0097a7] focus:border-[#0097a7] rounded-xl shadow-lg appearance-none">
+                                {% for category in categories %}
+                                <option value="{{ category }}">{{ category }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" 
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-xl font-bold text-white bg-gradient-to-r from-[#006064] to-[#0097a7] hover:from-[#0097a7] hover:to-[#006064] focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#0097a7] transition duration-300 ease-in-out transform hover:scale-[1.01]">
+                            Add Transaction
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
